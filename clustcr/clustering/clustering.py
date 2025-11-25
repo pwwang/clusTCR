@@ -1,3 +1,4 @@
+import warnings
 import pandas as pd
 import multiprocessing
 from typing import Union
@@ -5,6 +6,9 @@ from os.path import join, exists
 from os import mkdir, getcwd
 from shutil import rmtree
 import random
+
+# Suppress multiprocessing fork warning in Python 3.12+
+warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*multi-threaded.*")
 
 from .methods import MCL, MCL_from_preclusters, MCL_multiprocessing_from_preclusters, MCL_multiprocessing_from_preclusters_test, louvain_multiprocessing_from_preclusters, louvain_from_preclusters
 from ..modules.faiss_clustering import FaissClustering, properties
@@ -32,7 +36,7 @@ class ClusteringResult:
 
     def write_to_csv(self, path=join(getcwd(), 'clusTCR_clusters.csv')):
         return self.clusters_df.to_csv(path, index=False)
-    
+
     def export_network(self, filename='clusTCR_network.txt'):
         return create_edgelist(self.clusters_df.junction_aa, filename)
 
@@ -58,9 +62,9 @@ class Clustering:
     applied to identify specificity groups in each supercluster. This two-step
     clustering combination results in a fast and accurate way of grouping large
     data sets of CDR3 sequences into specificity groups.
-    
+
     The Clustering module currently provides the following clustering methods:
-        - MCL: Markov Clustering Algorithm. Accurate clustering method, 
+        - MCL: Markov Clustering Algorithm. Accurate clustering method,
         which is recommended for data sets containing < 50,000 sequences.
         - FAISS: This method provides extremely rapid clustering of sequences
         through dense vector representations. This method is far less accurate.
@@ -90,7 +94,7 @@ class Clustering:
         ----------
         chain : str
             TCR chain. Choose between 'A' (alpha) or 'B' (beta).
-            The chain choice does not influence the clustering process, 
+            The chain choice does not influence the clustering process,
             but it will be used for downstream cluster analysis. The default is 'B'.
         method : str
             Clustering method. The default is two-step.
@@ -103,7 +107,7 @@ class Clustering:
             Hyperparameters of MCL. The default is [1.2,2].
         faiss_cluster_size : int, optional
             Size of the pre-clusters. Increasing this number may result in
-            improved clustering accuracy but a decrease in computational performance. 
+            improved clustering accuracy but a decrease in computational performance.
             The default is 5000.
         faiss_training_data : pd.Series
             Batch clustering feature. Fit a subset of the data to train
@@ -216,7 +220,7 @@ class Clustering:
         clusters = {"junction_aa": [], "cluster": []}
         for i, cluster in enumerate(result):
             clusters["junction_aa"].append(cdr3[i])
-            clusters["cluster"].append(int(cluster))
+            clusters["cluster"].append(int(cluster.item()) if hasattr(cluster, 'item') else int(cluster))
 
         return ClusteringResult(pd.DataFrame(clusters), chain=self.chain)
 
@@ -241,7 +245,7 @@ class Clustering:
         # Multiprocessing
         super_clusters = self._faiss(cdr3)
         if self.n_cpus > 1:
-            if self.second_pass == "MCL":            
+            if self.second_pass == "MCL":
                 return ClusteringResult(
                     MCL_multiprocessing_from_preclusters(
                         super_clusters, self.mcl_params, self.n_cpus
@@ -274,7 +278,7 @@ class Clustering:
                     )
             else:
                 raise ClusTCRError(f"Unknown method: {self.second_pass}")
-        
+
     def _get_v_family(self, data: pd.DataFrame, v_gene_col : str):
         """
         Extract V gene family information from V gene column
@@ -297,10 +301,10 @@ class Clustering:
             lambda x: x.split("-")[0].split("*")[0]
             )
         return data
-        
-    def _vgene_clustering(self, 
-                          data: pd.DataFrame, 
-                          cdr3_col: str, 
+
+    def _vgene_clustering(self,
+                          data: pd.DataFrame,
+                          cdr3_col: str,
                           v_gene_col: str
                           ) -> ClusteringResult:
         """
@@ -328,7 +332,7 @@ class Clustering:
             data = self._get_v_family(data, v_gene_col)
         except KeyError:
             raise ClusTCRError(f"Unknown V gene column: {v_gene_col}")
-        # Map TCR columns to AIRR standard notation 
+        # Map TCR columns to AIRR standard notation
         remap = {
             cdr3_col:"junction_aa",
             v_gene_col:"v_call"
@@ -418,11 +422,11 @@ class Clustering:
         rmtree(Clustering.BATCH_TMP_DIRECTORY)
 
     @timeit
-    def fit(self, 
-            data, 
-            include_vgene = False, 
-            cdr3_col: str = None, 
-            v_gene_col: str = None, 
+    def fit(self,
+            data,
+            include_vgene = False,
+            cdr3_col: str = None,
+            v_gene_col: str = None,
             alpha: pd.Series = None
             ) -> ClusteringResult:
         """

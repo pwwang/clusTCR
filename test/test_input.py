@@ -22,3 +22,7 @@ class InputTest(TestBase):
     def test_metarepertoire(self):
         metarepertoire('input/immuneaccess', data_format='immuneaccess', out_format='CDR3', n_sequences=10 ** 3)
 
+
+if __name__ == '__main__':
+    import unittest
+    unittest.main()

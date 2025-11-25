@@ -10,6 +10,7 @@ from clustcr.input.tenx import parse_10x
 from os.path import join, dirname, abspath
 
 DIR = dirname(abspath(__file__))
+TESTDIR = os.path.join(dirname(dirname(DIR)), 'test')
 vdjdb_location = join(DIR, 'vdjdb/vdjdb_full.txt')
 
 
@@ -34,6 +35,8 @@ def read_cdr3(file, data_format):
     """
     Import function to read and parse rep-seq data of various formats.
     """
+    if not os.path.isabs(file):
+        file = os.path.join(TESTDIR, file)
     if data_format.lower()=='immuneaccess':
         return parse_immuneaccess(file)
     elif data_format.lower()=='airr':
@@ -44,12 +47,14 @@ def read_cdr3(file, data_format):
         return parse_10x(file)
     else:
         print(f'Unrecognised format: {data_format}')
-        
+
 
 def metarepertoire(directory, data_format, out_format='CDR3', n_sequences=10**6):
+    if not os.path.isabs(directory):
+        directory = os.path.join(TESTDIR, directory)
     files = os.listdir(directory)
     random.shuffle(files)
-    
+
     if data_format.lower()=='immuneaccess':
         meta = parse_immuneaccess(join(directory, files[0]), out_format=out_format)
     elif data_format.lower()=='airr':
@@ -94,15 +99,15 @@ def vdjdb_beta(q=0, epitopes=False):
         return beta.reset_index(drop=True)
     else:
         return beta[["junction_aa", "v_call"]].drop_duplicates().reset_index(drop=True)
-    
+
 def vdjdb(q=0):
     df = parse_vdjdb(vdjdb_location,q=q)
     df = df.rename(columns={'cdr3.beta':'junction_aa',
                             'v.beta':'v_call',
                             'antigen.epitope':'epitope'})
     return df[["junction_aa", "v_call", "epitope"]].dropna().drop_duplicates()
-    
-    
+
+
 def vdjdb_paired(q=0, epitopes=False):
     vdjdb = parse_vdjdb(vdjdb_location, q=q)
     paired = vdjdb[['cdr3.alpha', 'cdr3.beta', 'antigen.epitope']].dropna().drop_duplicates()
@@ -114,7 +119,7 @@ def vdjdb_paired(q=0, epitopes=False):
         return paired
     else:
         return paired[['CDR3_alpha', 'CDR3_beta']].drop_duplicates()
-    
+
 def vdjdb_gliph2(filename, q=0):
     prepared_data = parse_vdjdb(filename, q=q)
     prepared_data = prepared_data[['cdr3.beta', 'v.beta']].dropna().drop_duplicates()

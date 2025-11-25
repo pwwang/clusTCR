@@ -1,3 +1,18 @@
+"""
+Test suite for analysis functionality.
+
+Note: ResourceWarnings from the olga module and sklearn version warnings may appear.
+To suppress these warnings, run the test with:
+    python -W ignore::ResourceWarning -W ignore::UserWarning test/test_analysis.py -v
+"""
+
+import warnings
+# Suppress ResourceWarnings from olga module's unclosed file handles
+warnings.filterwarnings("ignore", category=ResourceWarning)
+# Suppress scikit-learn version warnings
+warnings.filterwarnings("ignore", category=UserWarning, message=".*scikit-learn.*")
+warnings.filterwarnings("ignore", message=".*Trying to unpickle estimator.*")
+
 from base import TestBase
 from clustcr import datasets, Clustering, ClusterAnalysis, ModelTraining
 
@@ -28,3 +43,6 @@ class ClusteringTest(TestBase):
 #        model.save(fitted, 'test.pkl')
 
 
+if __name__ == '__main__':
+    import unittest
+    unittest.main()

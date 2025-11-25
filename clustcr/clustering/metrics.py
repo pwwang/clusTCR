@@ -34,13 +34,13 @@ class Metrics:
         conf_mat_t = pd.pivot_table(self.gt, values='count',
                                     index=self.gt["epitope"],
                                     columns=self.gt["cluster"],
-                                    aggfunc=np.sum,
+                                    aggfunc="sum",
                                     fill_value=0)
         conf_mat_b = pd.pivot_table(self.gt_baseline,
                                     values='count',
                                     index=self.gt_baseline["epitope"],
                                     columns=self.gt_baseline["cluster"],
-                                    aggfunc=np.sum,
+                                    aggfunc="sum",
                                     fill_value=0)
 
         return conf_mat_t, conf_mat_b

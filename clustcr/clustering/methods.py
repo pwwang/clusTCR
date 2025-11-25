@@ -1,10 +1,21 @@
+import warnings
 import pandas as pd
 import networkx as nx
 import markov_clustering as mcl
 import community
 import parmap
 import multiprocessing
+import numpy as np
+import scipy.sparse as sp
 from clustcr.clustering.tools import create_edgelist
+
+# Suppress the multiprocessing fork warning in Python 3.12+
+# This warning occurs when using multiprocessing.Pool with fork start method
+warnings.filterwarnings(
+    "ignore",
+    category=DeprecationWarning,
+    message=".*multi-threaded.*"
+)
 
 def MCL(cdr3=None, edgelist=None, mcl_hyper=[1.2, 2], outfile=None):
     """
@@ -38,17 +49,21 @@ def MCL(cdr3=None, edgelist=None, mcl_hyper=[1.2, 2], outfile=None):
     try:
         G = nx.parse_adjlist(edgelist, nodetype=str)
         m = nx.to_scipy_sparse_array(G)
-    
+
+        # Convert to csr_matrix for compatibility with markov_clustering and numpy v2
+        # The markov_clustering library expects csr_matrix, not csr_array
+        m = sp.csr_matrix(m)
+
         # Run MCL
         result = mcl.run_mcl(m, inflation=mcl_hyper[0], expansion=mcl_hyper[1])
         mcl_output = mcl.get_clusters(result)
         identifiers = list(G.nodes())
-    
+
         # Map cluster ids back to seqs
         cluster_ids = dict()
         for i in range(len(mcl_output)):
             cluster_ids[i] = list(identifiers[i] for i in mcl_output[i])
-    
+
         # Generate nodelist
         clusters = {"junction_aa": [], "cluster": []}
         for c in cluster_ids:
@@ -56,12 +71,20 @@ def MCL(cdr3=None, edgelist=None, mcl_hyper=[1.2, 2], outfile=None):
                 clusters["junction_aa"].append(seq)
                 clusters["cluster"].append(c)
         clusters = pd.DataFrame(data=clusters)
-    
+
         # Write to file
         if outfile is not None:
             clusters.to_csv(outfile, sep="\t", index=False)
-    except nx.NetworkXError:
-        clusters = pd.DataFrame({"junction_aa": [], "cluster": []})
+    except (nx.NetworkXError, np.linalg.LinAlgError):
+        # Handle empty graphs or graphs with no edges (numpy v2 compatibility)
+        # If we have sequences, create singleton clusters
+        if cdr3 is not None:
+            clusters = pd.DataFrame({
+                "junction_aa": list(cdr3),
+                "cluster": list(range(len(cdr3)))
+            })
+        else:
+            clusters = pd.DataFrame({"junction_aa": [], "cluster": []})
 
     return clusters
 
@@ -75,7 +98,7 @@ def louvain(cdr3=None, edgelist=None):
         partition = community.best_partition(G)
     except nx.NetworkXError:
         partition = pd.DataFrame({"junction_aa": [], "cluster": []})
-        
+
     return pd.DataFrame.from_dict(
         partition, orient="index", columns=["cluster"]
         ).reset_index().rename(columns={'index': 'junction_aa'})
@@ -176,11 +199,11 @@ def MCL_from_preclusters(preclust, mcl_hyper):
     for c in preclust.cluster_contents():
         edges = create_edgelist(c)
         if initiate:
-            nodes = MCL(edgelist=edges, mcl_hyper=mcl_hyper)
+            nodes = MCL(cdr3=c, edgelist=edges, mcl_hyper=mcl_hyper)
             nodelist = pd.concat([nodelist,nodes],ignore_index=True)
             initiate = False
         else:
-            nodes = MCL(edgelist=edges, mcl_hyper=mcl_hyper)
+            nodes = MCL(cdr3=c, edgelist=edges, mcl_hyper=mcl_hyper)
             nodes["cluster"] = nodes["cluster"] + nodelist["cluster"].max() + 1
             nodelist = pd.concat([nodelist,nodes],ignore_index=True)
     return nodelist

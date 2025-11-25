@@ -11,13 +11,13 @@ requirements = [
     'parmap',
     'python-louvain',
     'matplotlib',
-    'scipy==1.8'
+    'scipy'
 #    'tcrdist3'
 ]
 
 setup(
     name='clusTCR',
-    version=versioneer.get_version(),
+    version='2025.11.25',
     cmdclass=versioneer.get_cmdclass(),
     description="a Python interface for rapid clustering of large sets of CDR3 sequences",
     license="MIT",
@@ -26,7 +26,7 @@ setup(
     url='https://github.com/svalkiers/clustcr',
     packages=find_packages(exclude=('analysis',)),
     package_data={
-        'clustcr': ['input/adaptive_imgt_mapping.csv', 
+        'clustcr': ['input/adaptive_imgt_mapping.csv',
                     'input/vdjdb/*',
                     'input/alphabeta_gammadelta_db.tsv',
                     'modules/olga/default_models/*/*',
@@ -36,8 +36,9 @@ setup(
     install_requires=requirements,
     keywords='https://github.com/svalkiers/clustcr',
     classifiers=[
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
     ]
 )

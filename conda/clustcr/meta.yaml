@@ -10,7 +10,7 @@ source:
 build:
   script: {{ PYTHON }} -m pip install --no-deps --ignore-installed -vv .
   noarch: python
-  
+  number: 1
 
 requirements:
   host:

@@ -12,3 +12,9 @@ dist/
 .ipynb_checkpoints
 .sass-cache/
 _site/
+.venv/
+__pycache__/
+.DS_Store
+.env
+clustcr_batch_tmp*/
+/clusTCR_clusters.csv

@@ -1,3 +1,12 @@
+"""
+Test suite for clustering functionality.
+
+Note: To suppress multiprocessing fork warnings in Python 3.12+, run with:
+    python -W ignore::DeprecationWarning test/test_clustering.py
+    or
+    PYTHONWARNINGS=ignore::DeprecationWarning python test/test_clustering.py
+"""
+
 from base import TestBase
 from clustcr import datasets, Clustering
 
@@ -107,3 +116,6 @@ class ClusteringTest(TestBase):
         Clustering().fit(self.cdr3).cluster_contents()
 
 
+if __name__ == '__main__':
+    import unittest
+    unittest.main()
