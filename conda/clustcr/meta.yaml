@@ -10,7 +10,7 @@ source:
 build:
   script: {{ PYTHON }} -m pip install --no-deps --ignore-installed -vv .
   noarch: python
-  number: 1
+  number: 2
 
 requirements:
   host:
@@ -18,7 +18,7 @@ requirements:
     - pip
   run:
     - python
-    - faiss
+    - faiss-cpu >=1.13
     # dependencies are defined in setup.py
     {% for dep in py_data['install_requires'] %}
     - {{ dep.lower() }}
