@@ -18,7 +18,7 @@ requirements:
     - pip
   run:
     - python
-    - faiss-cpu >=1.13
+    - faiss-cpu
     # dependencies are defined in setup.py
     {% for dep in py_data['install_requires'] %}
     - {{ dep.lower() }}

@@ -17,7 +17,7 @@ requirements = [
 
 setup(
     name='clusTCR',
-    version='2025.11.25',
+    version='2026.11.11',
     cmdclass=versioneer.get_cmdclass(),
     description="a Python interface for rapid clustering of large sets of CDR3 sequences",
     license="MIT",
